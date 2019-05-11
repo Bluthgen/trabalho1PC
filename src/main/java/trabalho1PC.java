@@ -94,7 +94,7 @@ public class trabalho1PC {
     }
 
     static private void k_meansPar() throws InterruptedException {
-        int numC, i, quantThreads = 2;
+        int numC, i, quantThreads = 4, som=0;
         boolean para = false;
         List<Thread> threads = new ArrayList<>();
         List<ArrayList<Elemento>> elemetoParaThread = new ArrayList<>();
@@ -103,11 +103,11 @@ public class trabalho1PC {
             elemetoParaThread.add(new ArrayList<>());
         }
 
-        //não sei como deixa isso pra qualquer tamanho
-        for (i = 0; i < elementos.size() / 2; i++) {
-            elemetoParaThread.get(0).add(elementos.get(i));
-            elemetoParaThread.get(1).add(elementos.get(elementos.size() - i - 1));
+        for (i = 0; i < quantThreads; i++) {
+            elemetoParaThread.get(i).addAll(elementos.subList(som,som+elementos.size()/quantThreads));
+            som += elementos.size()/quantThreads;
         }
+        elemetoParaThread.get(0).addAll(elementos.subList(som,elementos.size()));
 
         while (!para) {
             for (i = 0; i < quantThreads; i++) {
@@ -138,8 +138,8 @@ public class trabalho1PC {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         long startTempo = System.currentTimeMillis();
-        String tamanhoDaBase = "161";
-        String tipo = "1";
+        String tamanhoDaBase = "1601";
+        String tipo = "0";
         switch (tamanhoDaBase) {
             case "161":
                 carregaElementos(elementos, 161);
