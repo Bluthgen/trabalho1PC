@@ -1,5 +1,4 @@
-numero de iteracoes:47
-id=0, classe=12
+numero de iteracoes:47id=0, classe=12
 id=1, classe=10
 id=2, classe=8
 id=3, classe=2

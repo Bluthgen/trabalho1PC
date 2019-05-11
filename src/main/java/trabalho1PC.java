@@ -7,29 +7,42 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class trabalho1PC {
+class Thread extends java.lang.Thread {
 
+    public List<Elemento> elementos;
 
-    final static Charset ENCODING = StandardCharsets.UTF_8;
-
-    private static void log(Object msg){
-        System.out.println(String.valueOf(msg));
+    Thread(List<Elemento> elementos) {
+        this.elementos = elementos;
     }
 
+    @Override
+    public void run() {
+        for (Elemento elemento : elementos) {
+            elemento.encontraCentroide(trabalho1PC.centroides);
+        }
+    }
+}
+
+public class trabalho1PC {
+
+    final static Charset ENCODING = StandardCharsets.UTF_8;
+    private static List<Elemento> elementos = new ArrayList<>();
+    public static List<Centroide> centroides = new ArrayList<>();
+
     static void carregaElementos(List<Elemento> lista, int num) throws IOException {
-        String fileName= Paths.get("").toAbsolutePath().toString() + "\\int_base_" + num + ".data";
+        String fileName = Paths.get("").toAbsolutePath().toString() + "\\res\\int_base_" + num + ".data";
         Path path = Paths.get(fileName);
-        String linha= "";
+        String linha = "";
         String[] pedacos;
-        int i= 0;
-        try (Scanner scanner =  new Scanner(path, ENCODING.name())){
-            while (scanner.hasNextLine()){
-                linha= scanner.nextLine();
-                pedacos= linha.split(",");
-                int[] atributos= new int[num];
-                int j= 0;
-                for(String pedaco : pedacos){
-                    atributos[j]= Integer.parseInt(pedaco);
+        int i = 0;
+        try (Scanner scanner = new Scanner(path, ENCODING.name())) {
+            while (scanner.hasNextLine()) {
+                linha = scanner.nextLine();
+                pedacos = linha.split(",");
+                int[] atributos = new int[num];
+                int j = 0;
+                for (String pedaco : pedacos) {
+                    atributos[j] = Integer.parseInt(pedaco);
                     j++;
                 }
                 lista.add(i, new Elemento(num, atributos));
@@ -39,19 +52,19 @@ public class trabalho1PC {
     }
 
     static void carregaCentroide(List<Centroide> lista, int num) throws IOException {
-        String fileName= Paths.get("").toAbsolutePath().toString() + "\\int_centroid_" + num + "_20.data";
+        String fileName = Paths.get("").toAbsolutePath().toString() + "\\res\\int_centroid_" + num + "_20.data";
         Path path = Paths.get(fileName);
-        String linha= "";
+        String linha = "";
         String[] pedacos;
-        int i= 0;
-        try (Scanner scanner =  new Scanner(path, ENCODING.name())){
-            while (scanner.hasNextLine()){
-                linha= scanner.nextLine();
-                pedacos= linha.split(",");
-                int[] atributos= new int[num];
-                int j= 0;
-                for(String pedaco : pedacos){
-                    atributos[j]= Integer.parseInt(pedaco);
+        int i = 0;
+        try (Scanner scanner = new Scanner(path, ENCODING.name())) {
+            while (scanner.hasNextLine()) {
+                linha = scanner.nextLine();
+                pedacos = linha.split(",");
+                int[] atributos = new int[num];
+                int j = 0;
+                for (String pedaco : pedacos) {
+                    atributos[j] = Integer.parseInt(pedaco);
                     j++;
                 }
                 lista.add(i, new Centroide(num, atributos));
@@ -60,50 +73,74 @@ public class trabalho1PC {
         }
     }
 
-    static private void k_meansSeq(List<Elemento> elementos, List<Centroide> centroides){
-        boolean para= false;
+    static private void k_meansSeq() {
+        boolean para = false;
         int numC;
-        while(!para){
-            for(Elemento elemento : elementos){
+        while (!para) {
+            for (Elemento elemento : elementos) {
                 elemento.encontraCentroide(centroides);
             }
-            numC= 0;
-            for(Centroide centroide : centroides){
-                boolean mudado= centroide.recalculaAtributos(elementos);
-                if(!mudado){
+            numC = 0;
+            for (Centroide centroide : centroides) {
+                boolean mudado = centroide.recalculaAtributos(elementos);
+                if (!mudado) {
                     numC++;
                 }
             }
-            if(numC == 20){
-                para= true;
+            if (numC == 20) {
+                para = true;
             }
         }
     }
 
-    static private void k_meansPar(List<Elemento> elementos, List<Centroide> centroides){
-        boolean para= false;
-        int numC;
-        while(!para){
-            for(Elemento elemento : elementos){
-                elemento.encontraCentroidePar(centroides);
+    static private void k_meansPar() throws InterruptedException {
+        int numC, i, quantThreads = 2;
+        boolean para = false;
+        List<Thread> threads = new ArrayList<>();
+        List<ArrayList<Elemento>> elemetoParaThread = new ArrayList<>();
+
+        for (i = 0; i < quantThreads; i++) {
+            elemetoParaThread.add(new ArrayList<>());
+        }
+
+        //não sei como deixa isso pra qualquer tamanho
+        for (i = 0; i < elementos.size() / 2; i++) {
+            elemetoParaThread.get(0).add(elementos.get(i));
+            elemetoParaThread.get(1).add(elementos.get(elementos.size() - i - 1));
+        }
+
+        while (!para) {
+            for (i = 0; i < quantThreads; i++) {
+                threads.add(new Thread(elemetoParaThread.get(i)));
             }
-            numC= 0;
-            for(Centroide centroide : centroides){
-                boolean mudado= centroide.recalculaAtributos(elementos);
-                if(!mudado){
+
+            for (Thread thread : threads) {
+                thread.start();
+            }
+
+            for (Thread thread : threads) {
+                thread.join();
+            }
+
+            numC = 0;
+            for (Centroide centroide : centroides) {
+                boolean resultado = centroide.recalculaAtributos(elementos);
+                if (!resultado) {
                     numC++;
                 }
             }
-            if(numC == 20){
-                para= true;
+            if (numC == 20) {
+                para = true;
             }
+            threads.clear();
         }
     }
 
-    public static void main(String[] args) throws IOException{
-        List<Elemento> elementos= new ArrayList<>();
-        List<Centroide> centroides= new ArrayList<>();
-        switch(args[0]){
+    public static void main(String[] args) throws IOException, InterruptedException {
+        long startTempo = System.currentTimeMillis();
+        String tamanhoDaBase = "161";
+        String tipo = "1";
+        switch (tamanhoDaBase) {
             case "161":
                 carregaElementos(elementos, 161);
                 carregaCentroide(centroides, 161);
@@ -129,18 +166,19 @@ public class trabalho1PC {
                 carregaCentroide(centroides, 59);
                 break;
         }
-        if(args[1].equals("0")){
+        if (tipo.equals("0")) {
+            k_meansPar();
             System.out.println("Execução Paralela");
-        }else {
-            k_meansSeq(elementos, centroides);
+        } else {
+            k_meansSeq();
             System.out.println("Execução Sequencial");
         }
-        int i= 0;
-        for(Elemento elemento : elementos){
+        int i = 0;
+        for (Elemento elemento : elementos) {
 
-            System.out.println("Id: "+i+"\t"+"Classe: "+centroides.indexOf(elemento.getAssociado()));
+            System.out.println("Id: " + i + "\t" + "Classe: " + centroides.indexOf(elemento.getAssociado()));
             i++;
         }
-
+        System.out.println(System.currentTimeMillis() - startTempo);
     }
 }
