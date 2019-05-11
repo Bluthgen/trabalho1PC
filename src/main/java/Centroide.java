@@ -14,12 +14,13 @@ public class Centroide extends Elemento{
     }
 
     public boolean recalculaAtributos(List<Elemento> elementos){
-        int num= 0;
+        int num;
         int soma;
         int i;
         boolean mudado= false;
         for(i= 0; i<numDimensões; i++){
             soma= 0;
+            num= 0;
             for (Elemento elemento : elementos) {
                 if (elemento.getAssociado() == this) {
                     num++;
@@ -33,8 +34,36 @@ public class Centroide extends Elemento{
             }else{
                 resultado= false;
             }
-            if(!mudado){
-                mudado= resultado;
+            if(!mudado && resultado){
+                mudado= true;
+            }
+        }
+        return mudado;
+    }
+
+    public boolean recalculaAtributosPar(List<Elemento> elementos){
+        int num;
+        int soma;
+        int i;
+        boolean mudado= false;
+        for(i= 0; i<numDimensões; i++){
+            soma= 0;
+            num= 0;
+            for (Elemento elemento : elementos) {
+                if (elemento.getAssociado() == this) {
+                    num++;
+                    //System.out.println("A");
+                    soma += elemento.getAtributo(i);
+                }
+            }
+            boolean resultado;
+            if(num > 0) {
+                resultado = setAtributo(i, soma / num);
+            }else{
+                resultado= false;
+            }
+            if(!mudado && resultado){
+                mudado= true;
             }
         }
         return mudado;

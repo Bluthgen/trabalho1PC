@@ -60,13 +60,49 @@ public class trabalho1PC {
         }
     }
 
-    public static void main(String[] args) throws IOException{
-        //readLargerTextFile(Paths.get("").toAbsolutePath().toString() + "\\grafosPratica1\\"+args[0], grafo);
-        //System.out.println(Paths.get("").toAbsolutePath().toString() + "\\int_base_" + 59 + ".data");
+    static private void k_meansSeq(List<Elemento> elementos, List<Centroide> centroides){
+        boolean para= false;
+        int numC;
+        while(!para){
+            for(Elemento elemento : elementos){
+                elemento.encontraCentroide(centroides);
+            }
+            numC= 0;
+            for(Centroide centroide : centroides){
+                boolean mudado= centroide.recalculaAtributos(elementos);
+                if(!mudado){
+                    numC++;
+                }
+            }
+            if(numC == 20){
+                para= true;
+            }
+        }
+    }
 
+    static private void k_meansPar(List<Elemento> elementos, List<Centroide> centroides){
+        boolean para= false;
+        int numC;
+        while(!para){
+            for(Elemento elemento : elementos){
+                elemento.encontraCentroidePar(centroides);
+            }
+            numC= 0;
+            for(Centroide centroide : centroides){
+                boolean mudado= centroide.recalculaAtributos(elementos);
+                if(!mudado){
+                    numC++;
+                }
+            }
+            if(numC == 20){
+                para= true;
+            }
+        }
+    }
+
+    public static void main(String[] args) throws IOException{
         List<Elemento> elementos= new ArrayList<>();
         List<Centroide> centroides= new ArrayList<>();
-
         switch(args[0]){
             case "161":
                 carregaElementos(elementos, 161);
@@ -93,34 +129,18 @@ public class trabalho1PC {
                 carregaCentroide(centroides, 59);
                 break;
         }
-
-        boolean para= false;
-        int cont= 0, numC;
-        while(!para){
-            for(Elemento elemento : elementos){
-                elemento.encontraCentroide(centroides);
-            }
-            numC= 0;
-            for(Centroide centroide : centroides){
-                boolean resultado= centroide.recalculaAtributos(elementos);
-                if(!resultado){
-                    numC++;
-                }
-            }
-            if(numC == 20){
-                para= true;
-            }
-            cont++;
-            System.out.println(cont);
+        if(args[1].equals("0")){
+            System.out.println("Execução Paralela");
+        }else {
+            k_meansSeq(elementos, centroides);
+            System.out.println("Execução Sequencial");
         }
         int i= 0;
-
-        /*
         for(Elemento elemento : elementos){
 
             System.out.println("Id: "+i+"\t"+"Classe: "+centroides.indexOf(elemento.getAssociado()));
             i++;
         }
-        */
+
     }
 }
