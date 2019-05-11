@@ -94,7 +94,7 @@ public class trabalho1PC {
     }
 
     static private void k_meansPar() throws InterruptedException {
-        int numC, i, quantThreads = 4, som=0;
+        int numC, i, quantThreads = 2, som=0;
         boolean para = false;
         List<Thread> threads = new ArrayList<>();
         List<ArrayList<Elemento>> elemetoParaThread = new ArrayList<>();
@@ -124,7 +124,7 @@ public class trabalho1PC {
 
             numC = 0;
             for (Centroide centroide : centroides) {
-                boolean resultado = centroide.recalculaAtributos(elementos);
+                boolean resultado = centroide.recalculaAtributosPar(elementos,quantThreads);
                 if (!resultado) {
                     numC++;
                 }
@@ -138,7 +138,7 @@ public class trabalho1PC {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         long startTempo = System.currentTimeMillis();
-        String tamanhoDaBase = "1601";
+        String tamanhoDaBase = "161";
         String tipo = "0";
         switch (tamanhoDaBase) {
             case "161":
