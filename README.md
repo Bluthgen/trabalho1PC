@@ -1,8 +1,8 @@
-#Programa necessário
+# Programa necessário
 Java
-#Sistema operacional
+# Sistema operacional
 Windows
-#Como executar
+# Como executar
 ./nome_do_executavel tamanho_da_base tipo quantidade_de_threads
 
 - tamanho_da_base é o tamanho da base que pode ser 59, 161, 256, 1380, 1601 sendo 59 o valor default
