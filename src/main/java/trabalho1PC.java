@@ -158,7 +158,6 @@ public class trabalho1PC {
         }
 
         if (args[1].equals("1")) {
-            k_meansPar();
             try{
                 quantThreads = Integer.parseInt(args[2]);
             }catch (Exception e){
@@ -166,9 +165,10 @@ public class trabalho1PC {
                 System.exit(0);
             }
             System.out.println("Execução Paralela");
+            k_meansPar();
         } else {
-            k_meansSeq();
             System.out.println("Execução Sequencial");
+            k_meansSeq();
         }
         int i = 0;
         for (Elemento elemento : elementos) {
