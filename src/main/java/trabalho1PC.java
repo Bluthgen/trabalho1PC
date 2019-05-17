@@ -28,7 +28,7 @@ public class trabalho1PC {
     private final static Charset ENCODING = StandardCharsets.UTF_8;
     private static List<Elemento> elementos = new ArrayList<>();
     private static List<Centroide> centroides = new ArrayList<>();
-    static int quantThreads = 6;
+    static int quantThreads;
 
     private static int[] centro(int num, Scanner scanner) {
         String linha = scanner.nextLine();
@@ -130,9 +130,7 @@ public class trabalho1PC {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         long startTempo = System.currentTimeMillis();
-        String tamanhoDaBase = "1601";
-        String tipo = "0";
-        switch (tamanhoDaBase) {
+        switch (args[0]) {
             case "161":
                 carregaElementos(elementos, 161);
                 carregaCentroide(centroides, 161);
@@ -158,8 +156,15 @@ public class trabalho1PC {
                 carregaCentroide(centroides, 59);
                 break;
         }
-        if (tipo.equals("0")) {
+
+        if (args[1].equals("1")) {
             k_meansPar();
+            try{
+                quantThreads = Integer.parseInt(args[2]);
+            }catch (Exception e){
+                System.out.println("O valor passado para a quantidade de threads não é um número");
+                System.exit(0);
+            }
             System.out.println("Execução Paralela");
         } else {
             k_meansSeq();
