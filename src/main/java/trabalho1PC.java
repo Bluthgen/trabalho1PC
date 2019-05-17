@@ -7,66 +7,61 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-class Thread extends java.lang.Thread {
-
-    public List<Elemento> elementos;
-
-    Thread(List<Elemento> elementos) {
-        this.elementos = elementos;
-    }
-
-    @Override
-    public void run() {
-        for (Elemento elemento : elementos) {
-            elemento.encontraCentroide(trabalho1PC.centroides);
-        }
-    }
-}
-
 public class trabalho1PC {
 
-    final static Charset ENCODING = StandardCharsets.UTF_8;
-    private static List<Elemento> elementos = new ArrayList<>();
-    public static List<Centroide> centroides = new ArrayList<>();
+    static class Thread extends java.lang.Thread {
 
-    static void carregaElementos(List<Elemento> lista, int num) throws IOException {
+        volatile List<Elemento> elementos;
+
+        Thread(List<Elemento> elementos) {
+            this.elementos = elementos;
+        }
+
+        @Override
+        public void run() {
+            for (Elemento elemento : elementos) {
+                elemento.encontraCentroide(trabalho1PC.centroides);
+            }
+        }
+    }
+
+    private final static Charset ENCODING = StandardCharsets.UTF_8;
+    private static List<Elemento> elementos = new ArrayList<>();
+    private static List<Centroide> centroides = new ArrayList<>();
+    static int quantThreads = 6;
+
+    private static int[] centro(int num, Scanner scanner) {
+        String linha = scanner.nextLine();
+        String[] pedacos = linha.split(",");
+        int[] atributos = new int[num];
+        int j = 0;
+        for (String pedaco : pedacos) {
+            atributos[j] = Integer.parseInt(pedaco);
+            j++;
+        }
+        return atributos;
+    }
+
+    private static void carregaElementos(List<Elemento> lista, int num) throws IOException {
         String fileName = Paths.get("").toAbsolutePath().toString() + "\\res\\int_base_" + num + ".data";
         Path path = Paths.get(fileName);
-        String linha = "";
-        String[] pedacos;
         int i = 0;
         try (Scanner scanner = new Scanner(path, ENCODING.name())) {
             while (scanner.hasNextLine()) {
-                linha = scanner.nextLine();
-                pedacos = linha.split(",");
-                int[] atributos = new int[num];
-                int j = 0;
-                for (String pedaco : pedacos) {
-                    atributos[j] = Integer.parseInt(pedaco);
-                    j++;
-                }
+                int[] atributos = centro(num,scanner);
                 lista.add(i, new Elemento(num, atributos));
                 i++;
             }
         }
     }
 
-    static void carregaCentroide(List<Centroide> lista, int num) throws IOException {
+    private static void carregaCentroide(List<Centroide> lista, int num) throws IOException {
         String fileName = Paths.get("").toAbsolutePath().toString() + "\\res\\int_centroid_" + num + "_20.data";
         Path path = Paths.get(fileName);
-        String linha = "";
-        String[] pedacos;
         int i = 0;
         try (Scanner scanner = new Scanner(path, ENCODING.name())) {
             while (scanner.hasNextLine()) {
-                linha = scanner.nextLine();
-                pedacos = linha.split(",");
-                int[] atributos = new int[num];
-                int j = 0;
-                for (String pedaco : pedacos) {
-                    atributos[j] = Integer.parseInt(pedaco);
-                    j++;
-                }
+                int[] atributos = centro(num,scanner);
                 lista.add(i, new Centroide(num, atributos));
                 i++;
             }
@@ -94,7 +89,7 @@ public class trabalho1PC {
     }
 
     static private void k_meansPar() throws InterruptedException {
-        int numC, i, quantThreads = 4, som=0;
+        int numC, i, soma = 0;
         boolean para = false;
         List<Thread> threads = new ArrayList<>();
         List<ArrayList<Elemento>> elemetoParaThread = new ArrayList<>();
@@ -104,18 +99,15 @@ public class trabalho1PC {
         }
 
         for (i = 0; i < quantThreads; i++) {
-            elemetoParaThread.get(i).addAll(elementos.subList(som,som+elementos.size()/quantThreads));
-            som += elementos.size()/quantThreads;
+            elemetoParaThread.get(i).addAll(elementos.subList(soma, soma + elementos.size() / quantThreads));
+            soma += elementos.size() / quantThreads;
         }
-        elemetoParaThread.get(0).addAll(elementos.subList(som,elementos.size()));
+        elemetoParaThread.get(0).addAll(elementos.subList(soma, elementos.size()));
 
         while (!para) {
             for (i = 0; i < quantThreads; i++) {
                 threads.add(new Thread(elemetoParaThread.get(i)));
-            }
-
-            for (Thread thread : threads) {
-                thread.start();
+                threads.get(i).start();
             }
 
             for (Thread thread : threads) {
@@ -124,7 +116,7 @@ public class trabalho1PC {
 
             numC = 0;
             for (Centroide centroide : centroides) {
-                boolean resultado = centroide.recalculaAtributos(elementos);
+                boolean resultado = centroide.recalculaAtributosPar(elementos);
                 if (!resultado) {
                     numC++;
                 }
