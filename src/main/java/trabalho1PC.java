@@ -6,10 +6,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
-public class trabalho1PC {
+public class trabalho1PC{
 
-    static class Thread extends java.lang.Thread {
+    class Thread extends java.lang.Thread {
 
         volatile List<Elemento> elementos;
 
@@ -19,16 +21,28 @@ public class trabalho1PC {
 
         @Override
         public void run() {
-            for (Elemento elemento : elementos) {
-                elemento.encontraCentroide(trabalho1PC.centroides);
+            while(!para) {
+                for (Elemento elemento : elementos) {
+                    elemento.encontraCentroide(trabalho1PC.centroides);
+                }
+
+                try {
+                    barrier.await();
+                } catch (InterruptedException | BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
+    private CyclicBarrier barrier = new CyclicBarrier(quantThreads+1, new miolo());
+    private volatile boolean para = false;
     private final static Charset ENCODING = StandardCharsets.UTF_8;
     private static List<Elemento> elementos = new ArrayList<>();
     private static List<Centroide> centroides = new ArrayList<>();
     static int quantThreads;
+    static List<Integer> dimensoesParaThread = new ArrayList<>();
+    private static int numDimensoes;
 
     private static int[] centro(int num, Scanner scanner) {
         String linha = scanner.nextLine();
@@ -48,7 +62,7 @@ public class trabalho1PC {
         int i = 0;
         try (Scanner scanner = new Scanner(path, ENCODING.name())) {
             while (scanner.hasNextLine()) {
-                int[] atributos = centro(num,scanner);
+                int[] atributos = centro(num, scanner);
                 lista.add(i, new Elemento(num, atributos));
                 i++;
             }
@@ -61,7 +75,7 @@ public class trabalho1PC {
         int i = 0;
         try (Scanner scanner = new Scanner(path, ENCODING.name())) {
             while (scanner.hasNextLine()) {
-                int[] atributos = centro(num,scanner);
+                int[] atributos = centro(num, scanner);
                 lista.add(i, new Centroide(num, atributos));
                 i++;
             }
@@ -88,35 +102,18 @@ public class trabalho1PC {
         }
     }
 
-    static private void k_meansPar() throws InterruptedException {
-        int numC, i, soma = 0;
-        boolean para = false;
-        List<Thread> threads = new ArrayList<>();
-        List<ArrayList<Elemento>> elemetoParaThread = new ArrayList<>();
+    class miolo implements Runnable {
 
-        for (i = 0; i < quantThreads; i++) {
-            elemetoParaThread.add(new ArrayList<>());
-        }
-
-        for (i = 0; i < quantThreads; i++) {
-            elemetoParaThread.get(i).addAll(elementos.subList(soma, soma + elementos.size() / quantThreads));
-            soma += elementos.size() / quantThreads;
-        }
-        elemetoParaThread.get(0).addAll(elementos.subList(soma, elementos.size()));
-
-        while (!para) {
-            for (i = 0; i < quantThreads; i++) {
-                threads.add(new Thread(elemetoParaThread.get(i)));
-                threads.get(i).start();
-            }
-
-            for (Thread thread : threads) {
-                thread.join();
-            }
-
-            numC = 0;
+        @Override
+        public void run() {
+            int numC = 0;
             for (Centroide centroide : centroides) {
-                boolean resultado = centroide.recalculaAtributosPar(elementos);
+                boolean resultado = false;
+                try {
+                    resultado = centroide.recalculaAtributosPar(elementos);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 if (!resultado) {
                     numC++;
                 }
@@ -124,36 +121,78 @@ public class trabalho1PC {
             if (numC == 20) {
                 para = true;
             }
-            threads.clear();
         }
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    private void k_meansPar() throws InterruptedException, BrokenBarrierException {
+        int i, soma = 0;
+        List<Thread> threads = new ArrayList<>();
+        List<ArrayList<Elemento>> elemetoParaThread = new ArrayList<>();
+
+        for (i = 0; i < quantThreads; i++) {
+            elemetoParaThread.add(new ArrayList<>());
+        }
+
+        for (i = 0; i < quantThreads-1; i++) {
+            elemetoParaThread.get(i).addAll(elementos.subList(soma, soma + elementos.size() / quantThreads));
+            soma += elementos.size() / quantThreads;
+        }
+        elemetoParaThread.get(quantThreads-1).addAll(elementos.subList(soma, elementos.size()));
+
+        soma = 0;
+
+        for (i = 0; i < trabalho1PC.quantThreads - 1; i++) {
+            dimensoesParaThread.add(i, soma + numDimensoes / trabalho1PC.quantThreads);
+            soma += numDimensoes / trabalho1PC.quantThreads;
+        }
+        dimensoesParaThread.add(trabalho1PC.quantThreads - 1, numDimensoes);
+
+
+        for (i = 0; i < quantThreads; i++) {
+            threads.add(new Thread(elemetoParaThread.get(i)));
+            threads.get(i).start();
+        }
+
+        while (!para) {
+            barrier.await();
+        }
+
+        for (Thread thread : threads) {
+            thread.join();
+        }
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException, BrokenBarrierException {
         long startTempo = System.currentTimeMillis();
         switch (args[0]) {
             case "161":
                 carregaElementos(elementos, 161);
                 carregaCentroide(centroides, 161);
+                numDimensoes = 161;
                 break;
 
             case "256":
                 carregaElementos(elementos, 256);
                 carregaCentroide(centroides, 256);
+                numDimensoes = 256;
                 break;
 
             case "1380":
                 carregaElementos(elementos, 1380);
                 carregaCentroide(centroides, 1380);
+                numDimensoes = 1380;
                 break;
 
             case "1601":
                 carregaElementos(elementos, 1601);
                 carregaCentroide(centroides, 1601);
+                numDimensoes = 1601;
                 break;
 
             default:
                 carregaElementos(elementos, 59);
                 carregaCentroide(centroides, 59);
+                numDimensoes = 59;
                 break;
         }
 
@@ -165,7 +204,8 @@ public class trabalho1PC {
                 System.exit(0);
             }
             System.out.println("Execução Paralela");
-            k_meansPar();
+            trabalho1PC trabalho1PC = new trabalho1PC();
+            trabalho1PC.k_meansPar();
         } else {
             System.out.println("Execução Sequencial");
             k_meansSeq();

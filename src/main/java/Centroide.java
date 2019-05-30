@@ -37,6 +37,7 @@ class Centroide extends Elemento {
         }
     }
 
+    private List<Thread> threads = new ArrayList<>();
 
     Centroide(int numD, int[] attr) {
         super(numD, attr);
@@ -72,18 +73,10 @@ class Centroide extends Elemento {
     }
 
     boolean recalculaAtributosPar(List<Elemento> elementos) throws InterruptedException {
-        int i, soma = 0;
-        List<Thread> threads = new ArrayList<>();
-        List<Integer> dimensoesParaThread = new ArrayList<>();
-
-        for (i = 0; i < trabalho1PC.quantThreads - 1; i++) {
-            dimensoesParaThread.add(i, soma + numDimensoes / trabalho1PC.quantThreads);
-            soma += numDimensoes / trabalho1PC.quantThreads;
-        }
-        dimensoesParaThread.add(trabalho1PC.quantThreads - 1, numDimensoes);
+        int i;
 
         for (i = 0; i < trabalho1PC.quantThreads; i++) {
-            threads.add(new Thread(elementos, dimensoesParaThread.get(i), this));
+            threads.add(new Thread(elementos, trabalho1PC.dimensoesParaThread.get(i), this));
             threads.get(i).start();
         }
 
