@@ -216,6 +216,6 @@ public class trabalho1PC{
             System.out.println("Id: " + i + "\t" + "Classe: " + centroides.indexOf(elemento.getAssociado()));
             i++;
         }
-        System.out.println(System.currentTimeMillis() - startTempo);
+        System.out.println("Tempo decorrido: " + Long.toString(System.currentTimeMillis() - startTempo));
     }
 }
